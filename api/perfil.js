@@ -5,7 +5,6 @@ export default async function handler(req, res) {
     return res.redirect(301, 'https://www.playerverificado.com.br');
   }
 
-  // Limpa o nome (garante que Jhony%20Belluzzi vire Jhony Belluzzi)
   const nomeLimpo = decodeURIComponent(user);
   const userSafe = encodeURIComponent(nomeLimpo);
 
@@ -13,8 +12,8 @@ export default async function handler(req, res) {
     const SUPABASE_URL = 'https://fnophsqudrkeyjdnheig.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZub3Boc3F1ZHJrZXlqZG5oZWlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNTQ1ODIsImV4cCI6MjA4NTYzMDU4Mn0.OnDUMBvWsnUq0ifvFgpz6BD2Xq1HHjmWk6FYy74GdF4';
 
-    // A MÁGICA ESTÁ AQUI: Adicionadas aspas duplas ("") em volta do nome
-    const filtroQuery = encodeURIComponent(`(nick_roblox.eq."${nomeLimpo}",username.eq."${nomeLimpo}")`);
+    // Removemos as aspas e usamos 'ilike' para ignorar maiúsculas/minúsculas
+    const filtroQuery = encodeURIComponent(`(nick_roblox.ilike.${nomeLimpo},username.ilike.${nomeLimpo})`);
     const urlBusca = `${SUPABASE_URL}/rest/v1/profiles?or=${filtroQuery}&select=username,avatar`;
 
     const response = await fetch(urlBusca, {
@@ -25,11 +24,12 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    const perfil = data && data.length > 0 ? data[0] : null;
+    
+    // Verifica se os dados vieram corretamente em formato de lista (array)
+    const perfil = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
     const nomeExibicao = perfil && perfil.username ? perfil.username : nomeLimpo;
     
-    // Se não achar a foto, usa a imagem preta com as iniciais (como o JB)
     const fotoFallback = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nomeExibicao) + '&background=000&color=fff&size=512';
     const fotoExibicao = perfil && perfil.avatar ? perfil.avatar : fotoFallback;
 
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
           
           <title>Loja de ${nomeExibicao} - Player Verificado</title>
           <meta property="og:title" content="Loja de ${nomeExibicao} no Player Verificado">
-          <meta property="og:description" content="Acesse a loja de ${nomeExibicao} e confira os itens disponíveis!">
+          <meta property="og:description" content="Aceda à loja de ${nomeExibicao} e confira os itens disponíveis!">
           <meta property="og:type" content="website">
           <meta name="twitter:card" content="summary_large_image">
           <meta name="twitter:image" content="${fotoExibicao}">
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
           </script>
       </head>
       <body>
-          <p>Redirecionando para a loja...</p>
+          <p>A redirecionar para a loja...</p>
       </body>
       </html>
     `;
