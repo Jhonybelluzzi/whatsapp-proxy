@@ -1,20 +1,20 @@
 export default async function handler(req, res) {
-  // 1. Pega o nome do usuário da URL (ex: ?user=jhony)
+  // Pega o nome do usuário da URL
   const { user } = req.query;
 
-  // Se não tiver usuário, manda pro site principal
+  // Se não tiver usuário no link, manda pra página inicial
   if (!user) {
     return res.redirect(301, 'https://playerverificado.com.br');
   }
 
   try {
-    // 2. Busca os dados no seu Supabase (Usando a API REST direto para ser rápido)
-    // Substitua pela sua URL e sua ANON KEY pública do Supabase
-    const SUPABASE_URL = 'https://SEU_PROJETO.supabase.co';
-    const SUPABASE_KEY = 'SUA_ANON_KEY';
+    // Seus dados reais do Supabase fornecidos pelo Lovable
+    const SUPABASE_URL = 'https://fnophsqudrkeyjdnheig.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZub3Boc3F1ZHJrZXlqZG5oZWlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNTQ1ODIsImV4cCI6MjA4NTYzMDU4Mn0.OnDUMBvWsnUq0ifvFgpz6BD2Xq1HHjmWk6FYy74GdF4';
 
-    // Fazendo a busca na tabela onde ficam os perfis (exemplo: 'profiles')
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${user}&select=nome,foto_url`, {
+    // Fazendo a busca na tabela 'profiles' pelas colunas corretas
+    // Ele vai procurar o usuário tanto na coluna nick_roblox quanto na username
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?or=(nick_roblox.eq.${user},username.eq.${user})&select=username,avatar`, {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`
@@ -22,44 +22,43 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    const perfil = data[0]; // Pega o primeiro resultado
+    const perfil = data && data.length > 0 ? data[0] : null;
 
-    // Se o usuário não existir, usa uma imagem padrão ou redireciona
-    const nomeExibicao = perfil ? perfil.nome : 'Player Verificado';
-    const fotoExibicao = perfil ? perfil.foto_url : 'https://playerverificado.com.br/logo-padrao.png';
+    // Se achar o usuário, pega os dados. Se não achar, usa um texto/imagem padrão
+    const nomeExibicao = perfil && perfil.username ? perfil.username : 'Player Verificado';
+    const fotoExibicao = perfil && perfil.avatar ? perfil.avatar : 'https://playerverificado.com.br/logo-padrao.png';
 
-    // 3. Monta o HTML com as tags pro WhatsApp e o redirecionamento pro usuário real
+    // Monta o HTML com as tags pro WhatsApp e o redirecionamento pro usuário real
     const html = `
       <!DOCTYPE html>
       <html lang="pt-BR">
       <head>
           <meta charset="UTF-8">
-          <title>Perfil de ${nomeExibicao} - Player Verificado</title>
+          <title>Loja de ${nomeExibicao} - Player Verificado</title>
           
-          <meta property="og:title" content="${nomeExibicao} está no Player Verificado!">
-          <meta property="og:description" content="Confira o perfil e a loja de ${nomeExibicao}.">
+          <meta property="og:title" content="Loja de ${nomeExibicao} no Player Verificado">
+          <meta property="og:description" content="Acesse a loja de ${nomeExibicao} e confira os itens disponíveis!">
           <meta property="og:image" content="${fotoExibicao}">
           <meta property="og:type" content="website">
           <meta name="twitter:card" content="summary_large_image">
 
-          <meta http-equiv="refresh" content="0; url=https://playerverificado.com.br/${user}">
+          <meta http-equiv="refresh" content="0; url=https://playerverificado.com.br/loja/${user}">
           <script>
-              // Redirecionamento via JavaScript como backup
-              window.location.href = "https://playerverificado.com.br/${user}";
+              window.location.href = "https://playerverificado.com.br/loja/${user}";
           </script>
       </head>
       <body>
-          <p>Redirecionando para o perfil de ${nomeExibicao}...</p>
+          <p>Redirecionando para a loja de ${nomeExibicao}...</p>
       </body>
       </html>
     `;
 
-    // 4. Entrega o HTML para quem acessou (robô ou humano)
+    // Entrega o código final
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(html);
 
   } catch (error) {
-    // Em caso de erro, manda pro site principal pra não deixar o usuário na mão
-    res.redirect(301, `https://playerverificado.com.br/${user}`);
+    // Se der qualquer erro na comunicação com o banco, garante que o cliente não fique travado
+    res.redirect(301, `https://playerverificado.com.br/loja/${user}`);
   }
 }
