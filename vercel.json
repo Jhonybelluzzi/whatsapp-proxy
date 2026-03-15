@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/loja/(.*)",
       "destination": "/api/perfil?user=$1"
     }
   ]
