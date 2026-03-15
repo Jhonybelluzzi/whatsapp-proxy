@@ -1,6 +1,17 @@
 {
   "rewrites": [
     {
+      "source": "/loja/:nick",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i)whatsapp|facebookexternalhit|Twitterbot|Discordbot|TelegramBot|LinkedInBot"
+        }
+      ],
+      "destination": "https://fnophsqudrkeyjdnheig.supabase.co/functions/v1/og-profile?nick=:nick"
+    },
+    {
       "source": "/loja/(.*)",
       "destination": "/api/perfil?user=$1"
     }
