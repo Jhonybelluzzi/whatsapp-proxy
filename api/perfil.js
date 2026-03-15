@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   const { user } = req.query;
 
   if (!user) {
-    return res.redirect(301, 'https://www.playerverificado.com');
+    return res.redirect(301, 'https://www.playerverificado.com.br');
   }
 
   const userSafe = encodeURIComponent(user);
@@ -25,24 +25,43 @@ export default async function handler(req, res) {
     const perfil = data && data.length > 0 ? data[0] : null;
 
     const nomeExibicao = perfil && perfil.username ? perfil.username : user;
-    const fotoExibicao = perfil && perfil.avatar ? perfil.avatar : 'https://www.playerverificado.com/logo-padrao.png';
+    
+    // --- LÓGICA DE TRATAMENTO DA IMAGEM ---
+    let fotoExibicao = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nomeExibicao) + '&background=000&color=fff&size=512';
+    
+    if (perfil && perfil.avatar) {
+        // Se a imagem já for um link completo (começa com http), usamos ela.
+        if (perfil.avatar.startsWith('http')) {
+            fotoExibicao = perfil.avatar;
+        } else {
+            // Se for apenas o caminho, montamos a URL do seu Storage do Supabase
+            // Nota: Ajuste o nome do 'bucket' se necessário (usei 'avatars' como padrão)
+            fotoExibicao = `${SUPABASE_URL}/storage/v1/object/public/avatars/${perfil.avatar}`;
+        }
+    }
 
     const html = `
       <!DOCTYPE html>
       <html lang="pt-BR">
       <head>
           <meta charset="UTF-8">
-          <title>Loja de ${nomeExibicao} - Player Verificado</title>
           
+          <meta property="og:image" content="${fotoExibicao}">
+          <meta property="og:image:secure_url" content="${fotoExibicao}">
+          <meta property="og:image:type" content="image/png">
+          <meta property="og:image:width" content="400">
+          <meta property="og:image:height" content="400">
+          
+          <title>Loja de ${nomeExibicao} - Player Verificado</title>
           <meta property="og:title" content="Loja de ${nomeExibicao} no Player Verificado">
           <meta property="og:description" content="Acesse a loja de ${nomeExibicao} e confira os itens disponíveis!">
-          <meta property="og:image" content="${fotoExibicao}">
           <meta property="og:type" content="website">
           <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:image" content="${fotoExibicao}">
 
-          <meta http-equiv="refresh" content="0; url=https://www.playerverificado.com/loja/${userSafe}">
+          <meta http-equiv="refresh" content="0; url=https://www.playerverificado.com.br/loja/${userSafe}">
           <script>
-              window.location.href = "https://www.playerverificado.com/loja/${userSafe}";
+              window.location.href = "https://www.playerverificado.com.br/loja/${userSafe}";
           </script>
       </head>
       <body>
@@ -55,6 +74,6 @@ export default async function handler(req, res) {
     res.status(200).send(html);
 
   } catch (error) {
-    res.redirect(301, `https://www.playerverificado.com/loja/${userSafe}`);
+    res.redirect(301, `https://www.playerverificado.com.br/loja/${userSafe}`);
   }
 }
