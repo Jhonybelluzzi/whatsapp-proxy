@@ -26,19 +26,10 @@ export default async function handler(req, res) {
 
     const nomeExibicao = perfil && perfil.username ? perfil.username : user;
     
-    // --- LÓGICA DE TRATAMENTO DA IMAGEM ---
-    let fotoExibicao = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nomeExibicao) + '&background=000&color=fff&size=512';
-    
-    if (perfil && perfil.avatar) {
-        // Se a imagem já for um link completo (começa com http), usamos ela.
-        if (perfil.avatar.startsWith('http')) {
-            fotoExibicao = perfil.avatar;
-        } else {
-            // Se for apenas o caminho, montamos a URL do seu Storage do Supabase
-            // Nota: Ajuste o nome do 'bucket' se necessário (usei 'avatars' como padrão)
-            fotoExibicao = `${SUPABASE_URL}/storage/v1/object/public/avatars/${perfil.avatar}`;
-        }
-    }
+    // Como o Lovable já entrega a URL completa, usamos direto!
+    // Se o usuário não tiver foto, criamos uma imagem preta com as iniciais do nome dele.
+    const fotoFallback = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nomeExibicao) + '&background=000&color=fff&size=512';
+    const fotoExibicao = perfil && perfil.avatar ? perfil.avatar : fotoFallback;
 
     const html = `
       <!DOCTYPE html>
